@@ -36,6 +36,9 @@ const videoList = [{
   poster: 'http://media.w3.org/2010/05/video/poster.png'
 }];
 
+const videoInitialList = videoList.slice(0, 2).concat([null, null, null]);
+const videoPartialList = videoList.slice(2);
+
 QUnit.module('playlist-maker', {
 
   beforeEach() {
@@ -898,4 +901,43 @@ QUnit.test('playlist.shuffle({rest: true}) works as expected', function(assert) 
   assert.notStrictEqual(list.indexOf(3), -1, '3 is in the list');
   assert.notStrictEqual(list.indexOf(4), -1, '4 is in the list');
   assert.strictEqual(spy.callCount, 3, 'the "playlistsorted" event triggered');
+});
+
+QUnit.test('playlist.updateList() works as expected', function(assert) {
+  const player = playerProxyMaker();
+  const playlist = playlistMaker(player, videoInitialList);
+  const list = playlist();
+  const playlistItemIds = list.map(item => item.playlistItemId_);
+
+  const emptyIndexes = [];
+
+  list.forEach((item, index) => {
+    if (item.originalValue === null) {
+      emptyIndexes.push(index);
+    }
+  });
+
+  const modifiedPlaylist = playlist.updateList(videoPartialList, () => {
+    return emptyIndexes.shift();
+  });
+  const modifiedPlaylistItemIds = modifiedPlaylist.map(item => item.playlistItemId_);
+
+  assert.deepEqual(
+    playlistItemIds,
+    modifiedPlaylistItemIds,
+    'the value of playlistItemId_ remains the same as the original one'
+  );
+
+  function isItemEqual(src, dst, message) {
+    assert.equal(src.sources, dst.sources, message);
+    assert.equal(src.poster, dst.poster, message);
+  }
+
+  isItemEqual(modifiedPlaylist[2], videoPartialList[0], 'videoPartialList[0] is placed at position 2');
+  isItemEqual(modifiedPlaylist[3], videoPartialList[1], 'videoPartialList[1] is placed at position 3');
+  isItemEqual(modifiedPlaylist[4], videoPartialList[2], 'videoPartialList[2] is placed at position 4');
+
+  assert.equal(list[2], modifiedPlaylist[2], 'the updated item at position 2 is still the original item');
+  assert.equal(list[3], modifiedPlaylist[3], 'the updated item at position 3 is still the original item');
+  assert.equal(list[4], modifiedPlaylist[4], 'the updated item at position 4 is still the original item');
 });
