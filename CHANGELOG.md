@@ -1,3 +1,14 @@
+<a name="4.4.0"></a>
+# [4.4.0](https://github.com/StraaS/videojs-playlist/compare/v4.3.1...v4.4.0) (2019-05-14)
+
+### Features
+
+* implement updateList() function ([e691c7d](https://github.com/StraaS/videojs-playlist/commit/e691c7d))
+
+### Chores
+
+* rename repo name ([2056dc2](https://github.com/StraaS/videojs-playlist/commit/2056dc2))
+
 <a name="4.3.1"></a>
 ## [4.3.1](https://github.com/brightcove/videojs-playlist/compare/v4.3.0...v4.3.1) (2019-03-20)
 
