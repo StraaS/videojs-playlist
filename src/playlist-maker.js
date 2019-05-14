@@ -31,6 +31,10 @@ const isItemObject = (value) => {
  *         A new array with transformed items
  */
 const transformPrimitiveItems = (arr) => {
+  if (arr.filter(item => isItemObject(item)).length === arr.length) {
+    return arr;
+  }
+
   const list = [];
   let tempItem;
 
@@ -184,6 +188,20 @@ const randomize = (arr) => {
 };
 
 /**
+ * get the Copied playlist
+ *
+ * @private
+ * @param  {Array} arr
+ *         An array.
+ *
+ * @return {Array}
+ *         The copied array contains the same items.
+ */
+const cloneList = (arr) => {
+  return arr.map((item) => item.originalValue || item).slice();
+};
+
+/**
  * Factory function for creating new playlist implementation on the given player.
  *
  * API summary:
@@ -247,12 +265,8 @@ export default function factory(player, initialList, initialIndex = 0) {
       const previousPlaylist = Array.isArray(list) ? list.slice() : null;
       const nextPlaylist = newList.slice();
 
-      list = nextPlaylist.slice();
-
       // Transform any primitive and null values in an input list to objects
-      if (list.filter(item => isItemObject(item)).length !== list.length) {
-        list = transformPrimitiveItems(list);
-      }
+      list = transformPrimitiveItems(nextPlaylist.slice());
 
       // Add unique id to each playlist item. This id will be used
       // to determine index in cases where there are more than one
@@ -294,7 +308,35 @@ export default function factory(player, initialList, initialIndex = 0) {
 
     // Always return a shallow clone of the playlist list.
     //  We also want to return originalValue if any item in the list has it.
-    return list.map((item) => item.originalValue || item).slice();
+    return cloneList(list);
+  };
+
+  playlist.updateList = function updateList(partialList, positionCb) {
+    if (changing) {
+      throw new Error('do not call updateList() during a playlist change');
+    }
+
+    if (!Array.isArray(partialList)) {
+      throw new Error('give first argument an array when calling updateList');
+    }
+
+    if (typeof positionCb !== 'function') {
+      throw new Error('give second argument a callback when calling updateList');
+    }
+
+    const formattedPartialList = transformPrimitiveItems(partialList);
+
+    formattedPartialList.forEach(item => {
+      const position = positionCb(item, list);
+
+      if (position < 0 || position >= list.length) {
+        return;
+      }
+
+      Object.assign(list[position], item);
+    });
+
+    return cloneList(list);
   };
 
   // On a new source, if there is no current item, disable auto-advance.
